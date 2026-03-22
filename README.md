@@ -8,7 +8,7 @@ Each folder in this directory is an independent plugin repository, registered he
 
 ### 1. Create the GitHub repo
 
-Go to [github.com/Agentic-Local-Intelligence](https://github.com/Agentic-Local-Intelligence) and create a new repository named `<name>-plugin` (e.g. `tts-plugin`). Keep it empty — no README, no .gitignore.
+Go to [github.com/Agentic-Local-Intelligence](https://github.com/Agentic-Local-Intelligence) and create a new repository named `<name>-plugin` (e.g. `tts-plugin`). Keep it empty - no README, no .gitignore.
 
 ---
 
@@ -24,7 +24,7 @@ git remote add origin https://github.com/Agentic-Local-Intelligence/<name>-plugi
 
 ### 3. Create the required files
 
-**`plugin.json`** — manifest (required):
+**`plugin.json`** - manifest (required):
 ```json
 {
   "id": "your-plugin-id",
@@ -38,7 +38,7 @@ git remote add origin https://github.com/Agentic-Local-Intelligence/<name>-plugi
 }
 ```
 
-**`index.js`** — entry point (required):
+**`index.js`** - entry point (required):
 ```js
 'use strict';
 
@@ -104,7 +104,7 @@ git push
 ```bash
 cd ..   # back to installer-website root
 git add plugins
-git commit -m "update plugins submodule — add <name>"
+git commit -m "update plugins submodule - add <name>"
 git push
 ```
 
@@ -119,8 +119,8 @@ Every plugin receives a `ctx` object in its `install(ctx)` function:
 | `ctx.use('log')` | Logger: `log(msg, level?)` |
 | `ctx.use('events')` | EventEmitter shared across all plugins |
 | `ctx.use('config')` | Persistent config: `.get(key, default)` / `.set(key, value)` / `.all()` |
-| `ctx.use('ui.registerPanel')` | `(id, htmlPath, title?)` — register an HTML panel (requires `ui` plugin) |
-| `ctx.use('ui.openPanel')` | `(id?)` — open a panel in the default browser (requires `ui` plugin) |
+| `ctx.use('ui.registerPanel')` | `(id, htmlPath, title?)` - register an HTML panel (requires `ui` plugin) |
+| `ctx.use('ui.openPanel')` | `(id?)` - open a panel in the default browser (requires `ui` plugin) |
 | `ctx.provide('key', value)` | Expose a service for other plugins to consume |
 | `ctx.onMessage(type, handler)` | Register a WebSocket message handler: `handler(socket, msg)` |
 | `ctx.reply(socket, obj)` | Send a JSON response to one client |
@@ -130,7 +130,7 @@ Every plugin receives a `ctx` object in its `install(ctx)` function:
 | `ctx.appVersion` | The installed app version |
 | `ctx.dataDir` | Absolute path to the `data/` directory |
 
-Dependencies listed in `plugin.json` are loaded first. Load order: `core` → `ui` → everything else alphabetically.
+Dependencies listed in `plugin.json` are loaded first. Load order: `core` -> `ui` -> everything else alphabetically.
 
 ---
 
@@ -150,4 +150,4 @@ git submodule update --remote --merge
 
 ## Plugin categories
 
-The `[category]/` folder is a template placeholder — it shows the intended folder structure for organizing plugins by type. It is not a plugin and should not have a `git init`.
+The `[category]/` folder is a template placeholder - it shows the intended folder structure for organizing plugins by type. It is not a plugin and should not have a `git init`.
