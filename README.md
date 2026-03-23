@@ -34,7 +34,11 @@ git remote add origin https://github.com/Agentic-Local-Intelligence/<name>-plugi
   "main": "index.js",
   "dependencies": {
     "core": "*"
-  }
+  },
+  "permissions": [
+    "fs.read:${dataDir}",
+    "ctx.provide"
+  ]
 }
 ```
 
@@ -47,6 +51,10 @@ module.exports = {
         const log    = ctx.use('log');
         const events = ctx.use('events');
         const config = ctx.use('config');
+
+        // Use permission-gated APIs
+        const data = ctx.readFile('/path/to/file');
+        ctx.writeFile('/path/to/output', 'content');
 
         // Register a WebSocket message handler
         ctx.onMessage('myplugin:hello', (socket, msg) => {
@@ -114,23 +122,96 @@ git push
 
 Every plugin receives a `ctx` object in its `install(ctx)` function:
 
+### Always allowed (no permission needed)
+
 | Method / Property | Description |
 |---|---|
-| `ctx.use('log')` | Logger: `log(msg, level?)` |
-| `ctx.use('events')` | EventEmitter shared across all plugins |
-| `ctx.use('config')` | Persistent config: `.get(key, default)` / `.set(key, value)` / `.all()` |
-| `ctx.use('ui.registerPanel')` | `(id, htmlPath, title?)` - register an HTML panel (requires `ui` plugin) |
-| `ctx.use('ui.openPanel')` | `(id?)` - open a panel in the default browser (requires `ui` plugin) |
-| `ctx.provide('key', value)` | Expose a service for other plugins to consume |
+| `ctx.use('key')` | Consume a service provided by another plugin |
 | `ctx.onMessage(type, handler)` | Register a WebSocket message handler: `handler(socket, msg)` |
 | `ctx.reply(socket, obj)` | Send a JSON response to one client |
-| `ctx.broadcast(obj)` | Send a JSON message to all connected clients |
 | `ctx.loadedPlugins()` | Returns `{ id: { name, version } }` map of all loaded plugins |
 | `ctx.appName` | The installed app name |
 | `ctx.appVersion` | The installed app version |
 | `ctx.dataDir` | Absolute path to the `data/` directory |
 
+### Permission-gated methods
+
+| Method | Required Permission | Description |
+|---|---|---|
+| `ctx.provide('key', value)` | `ctx.provide` | Expose a service for other plugins to consume |
+| `ctx.broadcast(obj)` | `ctx.broadcast` | Send a JSON message to all connected clients |
+| `ctx.readFile(path)` | `fs.read` or `fs.read:<path>` | Read a file as UTF-8 string |
+| `ctx.readFileBuffer(path)` | `fs.read` or `fs.read:<path>` | Read a file as Buffer |
+| `ctx.writeFile(path, data)` | `fs.write` or `fs.write:<path>` | Write data to a file |
+| `ctx.existsSync(path)` | `fs.read` or `fs.read:<path>` | Check if a file exists |
+| `ctx.readDir(path)` | `fs.read` or `fs.read:<path>` | List directory contents |
+| `ctx.listen(port, handler)` | `net.listen` or `net.listen:<port>` | Start an HTTP server on a port |
+| `ctx.fetch(url, options)` | `net.connect` or `net.connect:<host>` | Make an outbound HTTP request |
+| `ctx.exec(command, args)` | `system.exec` or `system.exec:<cmd>` | Execute a command synchronously |
+| `ctx.execAsync(command, args)` | `system.exec` or `system.exec:<cmd>` | Execute a command asynchronously |
+
+Calling a gated method without the required permission throws a `PermissionError`.
+
 Dependencies listed in `plugin.json` are loaded first. Load order: `core` -> `ui` -> everything else alphabetically.
+
+---
+
+## Permissions
+
+Declare required permissions in `plugin.json` under the `permissions` array. The `${dataDir}` token expands to the app's data directory at load time.
+
+### Permission format
+
+```
+category.action           # Wildcard - grants all scopes
+category.action:scope     # Scoped - grants only matching scope
+```
+
+### Available permissions
+
+| Permission | Description |
+|---|---|
+| `fs.read` | Read any file |
+| `fs.read:<path>` | Read files under a specific path |
+| `fs.write` | Write any file |
+| `fs.write:<path>` | Write files under a specific path |
+| `net.listen` | Listen on any network port |
+| `net.listen:<port>` | Listen on a specific port |
+| `net.connect` | Make outbound connections to any host |
+| `net.connect:<host>` | Connect to a specific host |
+| `system.exec` | Execute any child process |
+| `system.exec:<cmd>` | Execute a specific command |
+| `ctx.provide` | Register services for other plugins |
+| `ctx.broadcast` | Broadcast messages to all WS clients |
+
+### Wildcard matching
+
+A permission without a scope grants all scopes. For example, `fs.read` grants access to `fs.read:/any/path`. Path-scoped permissions also match subdirectories: `fs.write:/data` grants `fs.write:/data/config.json`.
+
+---
+
+## Plugin packages
+
+Packages are curated bundles of related plugins. They are defined in `public/packages/index.json` and displayed in the marketplace UI.
+
+A package lists plugin IDs and metadata:
+
+```json
+{
+  "id": "essentials",
+  "name": "ALI Essentials",
+  "version": "1.0.0",
+  "description": "The core foundation every ALI installation needs.",
+  "author": "ALI Systems",
+  "icon": "box",
+  "plugins": ["core", "ui", "settings"],
+  "tags": ["core", "official"]
+}
+```
+
+When a user installs a package, the combined permissions of all plugins are shown for approval before installation proceeds.
+
+Individual plugin metadata is hosted in `public/plugins/index.json`.
 
 ---
 
