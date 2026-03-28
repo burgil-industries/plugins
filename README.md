@@ -1,4 +1,4 @@
-# ALI Plugins
+# COMPUTER Plugins
 
 Each folder in this directory is an independent plugin repository, registered here as a git submodule.
 
@@ -8,7 +8,7 @@ Each folder in this directory is an independent plugin repository, registered he
 
 ### 1. Create the GitHub repo
 
-Go to [github.com/Agentic-Local-Intelligence](https://github.com/Agentic-Local-Intelligence) and create a new repository named `<name>-plugin` (e.g. `tts-plugin`). Keep it empty - no README, no .gitignore.
+Go to [github.com/burgil-industries](https://github.com/burgil-industries) and create a new repository named `<name>-plugin` (e.g. `tts-plugin`). Keep it empty - no README, no .gitignore.
 
 ---
 
@@ -17,7 +17,7 @@ Go to [github.com/Agentic-Local-Intelligence](https://github.com/Agentic-Local-I
 ```bash
 cd plugins/<name>
 git init
-git remote add origin https://github.com/Agentic-Local-Intelligence/<name>-plugin.git
+git remote add origin https://github.com/burgil-industries/<name>-plugin.git
 ```
 
 ---
@@ -69,7 +69,7 @@ module.exports = {
 **`package.json`**:
 ```json
 {
-  "name": "@ali/plugin-<name>",
+  "name": "/plugin-<name>",
   "version": "1.0.0",
   "description": "...",
   "main": "index.js",
@@ -100,7 +100,7 @@ git push -u origin master
 
 ```bash
 cd plugins/
-git submodule add https://github.com/Agentic-Local-Intelligence/<name>-plugin.git <name>
+git submodule add https://github.com/burgil-industries/<name>-plugin.git <name>
 git commit -m "add <name> as submodule"
 git push
 ```
@@ -110,7 +110,7 @@ git push
 ### 6. Update the main repo to point to the new plugins commit
 
 ```bash
-cd ..   # back to installer-website root
+cd ..   # back to computer root
 git add plugins
 git commit -m "update plugins submodule - add <name>"
 git push
@@ -199,10 +199,10 @@ A package lists plugin IDs and metadata:
 ```json
 {
   "id": "essentials",
-  "name": "ALI Essentials",
+  "name": "COMPUTER Essentials",
   "version": "1.0.0",
-  "description": "The core foundation every ALI installation needs.",
-  "author": "ALI Systems",
+  "description": "The core foundation every COMPUTER installation needs.",
+  "author": "COMPUTER Systems",
   "icon": "box",
   "plugins": ["core", "ui", "settings"],
   "tags": ["core", "official"]
@@ -218,7 +218,7 @@ Individual plugin metadata is hosted in `public/plugins/index.json`.
 ## Cloning this repo with all submodules
 
 ```bash
-git clone --recurse-submodules https://github.com/Agentic-Local-Intelligence/plugins.git
+git clone --recurse-submodules https://github.com/burgil-industries/plugins.git
 
 # Already cloned without submodules?
 git submodule update --init --recursive

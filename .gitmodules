@@ -1,15 +1,15 @@
 [submodule "core"]
 	path = core
-	url = https://github.com/Agentic-Local-Intelligence/core-plugin.git
+	url = https://github.com/burgil-industries/core-plugin.git
 [submodule "ui"]
 	path = ui
-	url = https://github.com/Agentic-Local-Intelligence/ui-plugin.git
+	url = https://github.com/burgil-industries/ui-plugin.git
 [submodule "settings"]
 	path = settings
-	url = https://github.com/Agentic-Local-Intelligence/settings-plugin.git
+	url = https://github.com/burgil-industries/settings-plugin.git
 [submodule "example"]
 	path = example
-	url = https://github.com/Agentic-Local-Intelligence/example-plugin.git
+	url = https://github.com/burgil-industries/example-plugin.git
 [submodule "phone"]
 	path = phone
-	url = https://github.com/Agentic-Local-Intelligence/phone-plugin.git
+	url = https://github.com/burgil-industries/phone-plugin.git
