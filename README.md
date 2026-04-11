@@ -4,20 +4,20 @@ Each folder in this directory is an independent plugin repository, registered he
 
 ---
 
-## How plugins run — the VM sandbox
+## How plugins run - the VM sandbox
 
 When the app starts (`__APP_NAME__.cmd` → `node src/app.js`), the VM loader (`src/vm.js`) scans the `plugins/` directory. For each plugin it:
 
 1. Reads `plugin.json` to get the requested permissions.
-2. **Permission dialog** — if the plugin has never run before, a Windows dialog lists every permission in plain English. The user clicks **Allow** or **Deny**. The decision is saved to `data/permissions/<id>.json` and never asked again.
-3. Runs `index.js` inside a Node.js `vm` sandbox — no `fs`, `net`, `child_process`, or `process` globals are accessible unless you declared and were granted the matching permission.
+2. **Permission dialog** - if the plugin has never run before, a Windows dialog lists every permission in plain English. The user clicks **Allow** or **Deny**. The decision is saved to `data/permissions/<id>.json` and never asked again.
+3. Runs `index.js` inside a Node.js `vm` sandbox - no `fs`, `net`, `child_process`, or `process` globals are accessible unless you declared and were granted the matching permission.
 4. Calls `plugin.install(ctx)` with a `ctx` object that exposes only the APIs covered by the granted permissions.
 
-> **Upgrading isolation:** the sandbox uses Node's built-in `vm` module. For a fully separate V8 heap (zero prototype-chain escape risk) it can be swapped to [`isolated-vm`](https://github.com/laverdet/isolated-vm) without any changes to plugin code — the `ctx` API stays the same.
+> **Upgrading isolation:** the sandbox uses Node's built-in `vm` module. For a fully separate V8 heap (zero prototype-chain escape risk) it can be swapped to [`isolated-vm`](https://github.com/laverdet/isolated-vm) without any changes to plugin code - the `ctx` API stays the same.
 
 ---
 
-## Quick start — example plugin
+## Quick start - example plugin
 
 See [`example/`](example/) for the minimal working plugin. It declares two permissions, depends on `core`, writes a timestamped file to its private data dir, and logs the result:
 
@@ -55,14 +55,14 @@ module.exports = {
 }
 ```
 
-`${dataDir}` expands to `<install_dir>/data/plugins/example/` — the plugin's private data directory, created automatically on first load. The plugin logs this path at startup so you can find your files:
+`${dataDir}` expands to `<install_dir>/data/plugins/example/` - the plugin's private data directory, created automatically on first load. The plugin logs this path at startup so you can find your files:
 
 ```
 [INFO] example: data dir -> C:\Users\…\COMPUTER\data\plugins\example
 [INFO] example: wrote    -> C:\Users\…\COMPUTER\data\plugins\example\hello.txt
 ```
 
-> To reset a plugin's permission decision, delete `<install_dir>/data/permissions/<id>.json` and restart the app — the dialog will appear again.
+> To reset a plugin's permission decision, delete `<install_dir>/data/permissions/<id>.json` and restart the app - the dialog will appear again.
 
 ---
 
