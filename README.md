@@ -2,7 +2,7 @@
 
 Each folder is an independent plugin (git submodule). Plugins run in a Node.js `vm` sandbox and declare every permission upfront.
 
-**Full developer guide →** open COMPUTER and click **Plugin Docs** in the header.
+**Full developer guide ->** open COMPUTER and click **Plugin Docs** in the header.
 
 ---
 
