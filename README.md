@@ -30,7 +30,7 @@ module.exports = {
 }
 ```
 
-Drop the folder in `plugins/`, restart — a permission dialog appears once, then the plugin is active.
+Drop the folder in `plugins/`, restart - a permission dialog appears once, then the plugin is active.
 
 ---
 
@@ -38,12 +38,12 @@ Drop the folder in `plugins/`, restart — a permission dialog appears once, the
 
 | Plugin | Port | Description |
 |---|---|---|
-| `core` | — | Event bus, config, logger |
+| `core` | - | Event bus, config, logger |
 | `ui` | 53421 | HTTP panel server |
-| `settings` | — | Settings panel at `/settings` |
+| `settings` | - | Settings panel at `/settings` |
 | `manager` | 53422 | Plugin manager UI at `/manager` |
-| `tray` | — | Windows system tray icon |
-| `example` | — | Minimal demo |
+| `tray` | - | Windows system tray icon |
+| `example` | - | Minimal demo |
 
 ---
 
@@ -60,4 +60,4 @@ git clone --recurse-submodules https://github.com/your-org/computer.git
 
 ## Plugin categories
 
-The `[category]/` folder is a template placeholder for organizing plugins by type. Not a plugin — no `git init`.
+The `[category]/` folder is a template placeholder for organizing plugins by type. Not a plugin - no `git init`.
