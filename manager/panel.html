@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plugin Manager</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #08080d;
+  --surface:   #0f0f17;
+  --surface-2: #161620;
+  --surface-3: #1c1c28;
+  --border:    #22222e;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --dim:       #94a3b8;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --orange:    #f97316;
+  --blue:      #3b82f6;
+  --yellow:    #eab308;
+  --mono:      'Cascadia Code', 'Consolas', monospace;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px;
+  -webkit-font-smoothing: antialiased; }
+
+/* ── Layout ── */
+body { display: flex; flex-direction: column; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-title { font-size: 16px; font-weight: 700; letter-spacing: -.3px; flex-shrink: 0; }
+.topbar-sub   { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+.search-wrap { flex: 1; max-width: 300px; position: relative; }
+.search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  width: 14px; height: 14px; color: var(--muted); pointer-events: none; }
+#search { width: 100%; background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 10px 7px 32px; color: var(--text); font-size: 12px;
+  font-family: inherit; outline: none; }
+#search:focus { border-color: #3b3b55; }
+
+.filters { display: flex; gap: 6px; }
+.filter-btn { background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: 6px; padding: 5px 12px; font-size: 11px; font-weight: 600;
+  color: var(--dim); cursor: pointer; transition: all .15s; }
+.filter-btn:hover { border-color: #3b3b55; color: var(--text); }
+.filter-btn.active { background: var(--surface-2); border-color: #4b4b66; color: var(--text); }
+
+.refresh-btn { background: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 10px; color: var(--dim); cursor: pointer; display: flex;
+  align-items: center; gap: 5px; font-size: 11px; font-family: inherit; transition: all .15s; }
+.refresh-btn:hover { border-color: #3b3b55; color: var(--text); }
+.refresh-btn svg { width: 12px; height: 12px; }
+
+.content { flex: 1; overflow-y: auto; padding: 20px 24px;
+  scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+.content::-webkit-scrollbar { width: 5px; }
+.content::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+
+/* ── Plugin cards ── */
+.plugin-grid { display: flex; flex-direction: column; gap: 8px; }
+
+.plugin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  transition: border-color .15s;
+}
+.plugin-card:hover { border-color: #2e2e3e; }
+.plugin-card.loaded  { border-left: 3px solid var(--green); }
+.plugin-card.denied  { border-left: 3px solid var(--red); }
+.plugin-card.error   { border-left: 3px solid var(--orange); }
+.plugin-card.disabled{ border-left: 3px solid var(--muted); }
+.plugin-card.bundle  { border-left: 3px solid var(--blue); }
+.plugin-card.new     { border-left: 3px solid var(--yellow); }
+
+.card-main { display: flex; align-items: flex-start; gap: 12px; }
+
+.card-avatar {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; border: 1px solid var(--border);
+}
+
+.card-info { flex: 1; min-width: 0; }
+
+.card-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 3px; }
+.card-name  { font-size: 14px; font-weight: 600; }
+.card-ver   { font-size: 10px; color: var(--muted); background: var(--surface-3);
+  border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+.card-badge { font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+  text-transform: uppercase; letter-spacing: .04em; }
+.badge-loaded   { background: #0d2e1f; color: var(--green); }
+.badge-denied   { background: #2d1212; color: var(--red); }
+.badge-error    { background: #2d1a0d; color: var(--orange); }
+.badge-disabled { background: var(--surface-3); color: var(--muted); }
+.badge-bundle   { background: #0d1a35; color: var(--blue); }
+.badge-new      { background: #2d2700; color: var(--yellow); }
+
+.card-desc { font-size: 12px; color: var(--muted); margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.card-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+.card-meta-item { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.card-meta-item strong { color: var(--dim); }
+.dep-link { color: var(--dim); text-decoration: none; cursor: default; }
+.dep-link:hover { color: var(--text); text-decoration: underline; cursor: pointer; }
+
+.card-actions { display: flex; flex-direction: column; align-items: flex-end;
+  gap: 8px; justify-content: flex-start; }
+
+/* ── Toggle switch ── */
+.toggle-wrap { display: flex; align-items: center; gap: 6px; }
+.toggle-label { font-size: 10px; color: var(--muted); }
+
+.toggle { position: relative; display: inline-block; width: 38px; height: 22px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; cursor: pointer;
+  background: var(--surface-3); border: 1px solid var(--border);
+  border-radius: 22px; transition: background .2s, border-color .2s;
+}
+.toggle-thumb {
+  position: absolute; left: 3px; top: 3px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--muted); transition: transform .2s, background .2s;
+}
+.toggle input:checked + .toggle-track { background: #0d2e1f; border-color: var(--green); }
+.toggle input:checked + .toggle-track .toggle-thumb { background: var(--green); transform: translateX(16px); }
+.toggle input:disabled + .toggle-track { opacity: .4; cursor: default; }
+
+.action-btn {
+  background: none; border: 1px solid var(--border); border-radius: 6px;
+  padding: 4px 9px; font-size: 10px; font-weight: 600; color: var(--muted);
+  cursor: pointer; font-family: inherit; transition: all .15s; white-space: nowrap;
+}
+.action-btn:hover { border-color: #3b3b55; color: var(--text); }
+
+.error-msg { font-size: 10px; color: var(--orange); font-family: var(--mono);
+  background: #2d1a0d; border-radius: 4px; padding: 3px 6px; max-width: 180px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Empty / loading ── */
+.empty { text-align: center; color: var(--muted); padding: 60px 0; font-size: 13px; }
+
+/* ── Confirm modal ── */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); z-index: 100;
+  align-items: center; justify-content: center;
+}
+.modal-backdrop.show { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px; max-width: 360px; width: 100%; margin: 16px;
+  animation: pop .18s ease;
+}
+@keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+.modal p  { font-size: 12px; color: var(--dim); line-height: 1.6; margin-bottom: 14px; }
+.dep-list { font-size: 11px; font-family: var(--mono); color: var(--orange);
+  background: #2d1a0d; border-radius: 6px; padding: 8px 10px; margin-bottom: 16px;
+  list-style: none; display: flex; flex-direction: column; gap: 3px; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.modal-actions button { border: none; border-radius: 7px; padding: 8px 18px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+.btn-cancel { background: var(--surface-3); color: var(--dim);
+  border: 1px solid var(--border); }
+.btn-cancel:hover { background: var(--surface-2); }
+.btn-confirm { background: var(--red); color: #fff; }
+.btn-confirm:hover { opacity: .88; }
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 16px; font-size: 12px; color: var(--text); z-index: 200;
+  animation: slidein .2s ease; pointer-events: none;
+}
+@keyframes slidein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Plugin Manager</div>
+    <div class="topbar-sub" id="topbar-sub">Loading...</div>
+  </div>
+
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input id="search" type="text" placeholder="Search plugins…" oninput="render()">
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('loaded',this)">Loaded</button>
+    <button class="filter-btn" onclick="setFilter('disabled',this)">Disabled</button>
+    <button class="filter-btn" onclick="setFilter('problem',this)">Problems</button>
+  </div>
+
+  <button class="refresh-btn" onclick="load()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"/>
+      <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
+    Refresh
+  </button>
+</div>
+
+<div class="content">
+  <div class="plugin-grid" id="grid"><div class="empty">Loading…</div></div>
+</div>
+
+<!-- Dependency confirmation modal -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-title">Disable Plugin</h3>
+    <p id="modal-body"></p>
+    <ul class="dep-list" id="dep-list"></ul>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-confirm" id="modal-confirm">Disable All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:53422';
+
+const AVATAR_COLORS = [
+  ['#1e3a5f','#60a5fa'], ['#1a3a2a','#34d399'], ['#3b1f4a','#c084fc'],
+  ['#3b2a10','#fbbf24'], ['#3b1a1a','#f87171'], ['#1a2f3b','#38bdf8'],
+];
+
+let plugins = [];
+let activeFilter = 'all';
+
+async function load() {
+  try {
+    const res = await fetch(`${API}/api/plugins`);
+    plugins = await res.json();
+    render();
+  } catch (e) {
+    document.getElementById('grid').innerHTML =
+      `<div class="empty">Could not reach manager API (${e.message})</div>`;
+  }
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function render() {
+  const q = document.getElementById('search').value.toLowerCase();
+  let list = plugins;
+
+  if (q) list = list.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    p.id.toLowerCase().includes(q) ||
+    (p.description || '').toLowerCase().includes(q)
+  );
+
+  if (activeFilter === 'loaded')   list = list.filter(p => p.loaded);
+  if (activeFilter === 'disabled') list = list.filter(p => p.status === 'disabled');
+  if (activeFilter === 'problem')  list = list.filter(p =>
+    p.status === 'error' || p.status === 'denied'
+  );
+
+  // Update subtitle
+  const loaded = plugins.filter(p => p.loaded).length;
+  document.getElementById('topbar-sub').textContent =
+    `${plugins.length} plugins · ${loaded} loaded`;
+
+  const grid = document.getElementById('grid');
+  if (list.length === 0) {
+    grid.innerHTML = '<div class="empty">No plugins match.</div>';
+    return;
+  }
+  grid.innerHTML = list.map(p => cardHTML(p)).join('');
+}
+
+function cardHTML(p) {
+  const ci = (p.name.charCodeAt(0) || 0) % AVATAR_COLORS.length;
+  const [bg, fg] = AVATAR_COLORS[ci];
+  const letter = (p.name[0] || '?').toUpperCase();
+
+  const statusClass = p.type === 'bundle' ? 'bundle' : (p.status || 'new');
+  const badgeLabel  = p.type === 'bundle' ? 'bundle' : (p.status || 'new');
+
+  const isEnabled = p.loaded || p.status === 'loaded' || p.status === 'new';
+  const canToggle = p.status !== 'error'; // errors need reset-perms first
+
+  const depsHtml = p.dependencies && p.dependencies.length
+    ? `<span class="card-meta-item">deps: ${
+        p.dependencies.map(d => `<a class="dep-link" onclick="scrollTo('${d}')">${d}</a>`).join(', ')
+      }</span>`
+    : '';
+
+  const usedByHtml = p.dependents && p.dependents.length
+    ? `<span class="card-meta-item">used by: ${
+        p.dependents.map(d => `<a class="dep-link" onclick="scrollTo('${d}')">${d}</a>`).join(', ')
+      }</span>`
+    : '';
+
+  const membersHtml = p.type === 'bundle' && p.members && p.members.length
+    ? `<span class="card-meta-item">includes: <strong>${p.members.join(', ')}</strong></span>`
+    : '';
+
+  const errorHtml = p.status === 'error' && p.error
+    ? `<div class="error-msg" title="${esc(p.error)}">${esc(p.error.slice(0,60))}</div>`
+    : '';
+
+  const restartNote = p.status === 'disabled' && p.loaded
+    ? `<div class="action-btn" style="color:var(--yellow);border-color:var(--yellow);cursor:default">restart needed</div>`
+    : '';
+
+  return `
+<div class="plugin-card ${statusClass}" id="card-${p.id}">
+  <div class="card-main">
+    <div class="card-avatar" style="background:${bg};color:${fg}">${letter}</div>
+    <div class="card-info">
+      <div class="card-name-row">
+        <span class="card-name">${esc(p.name)}</span>
+        <span class="card-ver">v${esc(p.version)}</span>
+        <span class="card-badge badge-${statusClass}">${badgeLabel}</span>
+      </div>
+      <div class="card-desc">${esc(p.description || '')}</div>
+      <div class="card-meta">
+        ${depsHtml}${usedByHtml}${membersHtml}
+      </div>
+      ${errorHtml}
+    </div>
+  </div>
+  <div class="card-actions">
+    <div class="toggle-wrap">
+      <label class="toggle" title="${isEnabled ? 'Disable' : 'Enable'} ${esc(p.name)}">
+        <input type="checkbox" ${isEnabled ? 'checked' : ''} ${!canToggle ? 'disabled' : ''}
+          onchange="togglePlugin('${p.id}', this.checked, this)">
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </label>
+    </div>
+    ${restartNote}
+    <button class="action-btn" onclick="resetPerms('${p.id}')" title="Re-show permission dialog">
+      Reset perms
+    </button>
+  </div>
+</div>`;
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollTo(id) {
+  const el = document.getElementById(`card-${id}`);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Toggle (enable / disable) ───────────────────────────────────────────────
+async function togglePlugin(id, enable, checkbox) {
+  checkbox.disabled = true;
+  try {
+    if (enable) {
+      const res = await fetch(`${API}/api/plugins/${id}/enable`, { method: 'POST' });
+      const data = await res.json();
+      toast(`${id}: ${data.loaded ? 'loaded' : 'enabled (restart may be needed)'}`);
+    } else {
+      await disablePlugin(id, checkbox);
+      return; // disablePlugin handles re-enable on cancel
+    }
+    await load();
+  } catch (e) {
+    toast(`Error: ${e.message}`, true);
+    checkbox.checked = !checkbox.checked;
+    checkbox.disabled = false;
+  }
+}
+
+async function disablePlugin(id, checkbox) {
+  const res = await fetch(`${API}/api/plugins/${id}/disable`, { method: 'POST' });
+
+  if (res.status === 409) {
+    const data = await res.json();
+    // Show confirmation modal
+    showModal(
+      `Disable "${id}"`,
+      `This plugin has dependents that will also be disabled:`,
+      data.dependents,
+      async () => {
+        const r2 = await fetch(`${API}/api/plugins/${id}/disable-force`, { method: 'POST' });
+        const d2 = await r2.json();
+        toast(`Disabled "${id}" + ${d2.also_disabled.length} dependent(s). Restart to take full effect.`);
+        await load();
+      },
+      () => { checkbox.checked = true; checkbox.disabled = false; }
+    );
+  } else {
+    const data = await res.json();
+    toast(`Disabled "${id}"${data.restart_required ? ' — restart to take full effect' : ''}`);
+    await load();
+  }
+}
+
+async function resetPerms(id) {
+  if (!confirm(`Reset saved permissions for "${id}"? It will re-ask for permissions on next load.`)) return;
+  try {
+    await fetch(`${API}/api/plugins/${id}/reset-perms`, { method: 'POST' });
+    toast(`Permissions reset for "${id}"`);
+    await load();
+  } catch (e) {
+    toast(`Error: ${e.message}`, true);
+  }
+}
+
+// ── Modal ────────────────────────────────────────────────────────────────────
+let _modalOnConfirm = null;
+let _modalOnCancel  = null;
+
+function showModal(title, body, deps, onConfirm, onCancel) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent  = body;
+  document.getElementById('dep-list').innerHTML = deps.map(d =>
+    `<li>• ${esc(d)}</li>`).join('');
+  _modalOnConfirm = onConfirm;
+  _modalOnCancel  = onCancel;
+  document.getElementById('modal-confirm').onclick = () => {
+    closeModal();
+    if (_modalOnConfirm) _modalOnConfirm();
+  };
+  document.getElementById('modal-backdrop').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('show');
+  if (_modalOnCancel) { _modalOnCancel(); _modalOnCancel = null; }
+  _modalOnConfirm = null;
+}
+
+document.getElementById('modal-backdrop').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function toast(msg, isError = false) {
+  let el = document.querySelector('.toast');
+  if (el) el.remove();
+  clearTimeout(_toastTimer);
+  el = document.createElement('div');
+  el.className = 'toast';
+  el.style.borderColor = isError ? 'var(--red)' : 'var(--border)';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  _toastTimer = setTimeout(() => el.remove(), 3500);
+}
+
+load();
+</script>
+</body>
+</html>

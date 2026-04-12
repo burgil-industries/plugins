@@ -1,0 +1,16 @@
+{
+  "id": "tray",
+  "name": "System Tray",
+  "version": "1.0.0",
+  "description": "Windows system tray icon. Left-click or 'Open' to launch the panel UI; 'Exit' to shut down.",
+  "main": "index.js",
+  "dependencies": {
+    "core": "*",
+    "ui": "*"
+  },
+  "permissions": [
+    "system.exec:powershell",
+    "fs.read:${dataDir}",
+    "fs.write:${dataDir}"
+  ]
+}

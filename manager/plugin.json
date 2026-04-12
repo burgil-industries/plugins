@@ -1,0 +1,17 @@
+{
+  "id": "manager",
+  "name": "Plugin Manager",
+  "version": "1.0.0",
+  "description": "Web-based plugin manager — enable, disable, inspect and manage all plugins.",
+  "main": "index.js",
+  "dependencies": {
+    "core": "*",
+    "ui": "*"
+  },
+  "permissions": [
+    "net.listen:53422",
+    "fs.read",
+    "ctx.provide",
+    "vm.manage"
+  ]
+}
