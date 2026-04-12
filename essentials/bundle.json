@@ -1,7 +1,0 @@
-{
-  "id": "essentials",
-  "name": "COMPUTER Essentials",
-  "version": "1.0.0",
-  "description": "The core foundation every COMPUTER installation needs.",
-  "plugins": ["core", "ui", "settings"]
-}

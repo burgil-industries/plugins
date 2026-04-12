@@ -13,3 +13,12 @@
 [submodule "phone"]
 	path = phone
 	url = https://github.com/burgil-industries/phone-plugin.git
+[submodule "manager"]
+	path = manager
+	url = https://github.com/burgil-industries/manager-plugin.git
+[submodule "essentials"]
+	path = essentials
+	url = https://github.com/burgil-industries/essentials-plugin.git
+[submodule "tray"]
+	path = tray
+	url = https://github.com/burgil-industries/tray-plugin.git
