@@ -20,7 +20,7 @@ module.exports = {
 ```
 
 ```json
-// plugins/hello/plugin.json
+// plugins/hello/plugin.computer
 {
   "id": "hello",
   "name": "Hello",
@@ -34,11 +34,72 @@ Drop the folder in `plugins/`, restart - a permission dialog appears once, then 
 
 ---
 
+## Hooks
+
+The core plugin provides a WordPress-style hooks system. Plugins can register actions (side effects) and filters (value transforms) for any hook name.
+
+### Registering hooks
+
+```js
+module.exports = {
+  install(ctx) {
+    const hooks = ctx.use('hooks');
+
+    // Actions - fire-and-forget side effects
+    hooks.addAction('app:launch', async (data) => {
+      console.log('App launched!');
+    });
+
+    hooks.addAction('app:file-open', async ({ path }) => {
+      console.log('File opened:', path);
+    });
+
+    // Filters - transform a value through a chain
+    hooks.addFilter('my-plugin:transform', async (value, data) => {
+      return value.toUpperCase();
+    });
+
+    // Priority (lower = earlier, default 10)
+    hooks.addAction('app:launch', myCallback, 5);  // runs before default
+  }
+};
+```
+
+### Built-in hooks
+
+| Hook | Fired when | Data |
+|---|---|---|
+| `app:launch` | After all plugins load | `{}` |
+| `app:shutdown` | Before the app exits | `{}` |
+| `app:file-open` | A `.computer` file is opened | `{ path }` |
+| `app:protocol` | A `computer://` URI is received | `{ uri, host, path, query }` |
+| `app:before-install` | Before a plugin install via protocol | `{ pluginId, version }` |
+
+### Custom hooks
+
+Plugins can define and fire their own hooks:
+
+```js
+// In your plugin
+const hooks = ctx.use('hooks');
+await hooks.doAction('my-plugin:custom-event', { key: 'value' });
+const result = await hooks.applyFilters('my-plugin:filter', initialValue);
+```
+
+---
+
+## Manifest files
+
+- **`plugin.computer`** - Plugin manifest (id, name, version, permissions, dependencies)
+- **`bundle.computer`** - Bundle manifest (groups multiple plugins for combined permission dialog)
+
+---
+
 ## Built-in plugins
 
 | Plugin | Port | Description |
 |---|---|---|
-| `core` | - | Event bus, config, logger |
+| `core` | - | Event bus, hooks, config, logger |
 | `ui` | 53421 | HTTP panel server |
 | `settings` | - | Settings panel at `/settings` |
 | `manager` | 53422 | Plugin manager UI at `/manager` |
