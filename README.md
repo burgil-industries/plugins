@@ -36,7 +36,30 @@ Drop the folder in `plugins/`, restart - a permission dialog appears once, then 
 
 ## Hooks
 
-The core plugin provides a WordPress-style hooks system. Plugins can register actions (side effects) and filters (value transforms) for any hook name.
+The core plugin provides a WordPress-style hooks system. Plugins can register actions (side effects) and filters (value transforms) for any hook name. All hook operations require permissions.
+
+### Permissions
+
+Declare which hooks your plugin needs in `plugin.computer`:
+
+```json
+{
+  "permissions": [
+    "hooks.action:app:launch",
+    "hooks.action:app:file-open",
+    "hooks.filter:app:file-open:handle",
+    "hooks.fire:my-plugin:*"
+  ]
+}
+```
+
+| Permission | Allows | Example |
+|---|---|---|
+| `hooks.action:<hook>` | Register/remove action callbacks | `hooks.action:app:launch` |
+| `hooks.filter:<hook>` | Register/remove filter callbacks | `hooks.filter:app:file-open:handle` |
+| `hooks.fire:<hook>` | Fire hooks (doAction / applyFilters) | `hooks.fire:my-plugin:custom-event` |
+| `hooks.action` (unscoped) | Register actions on ALL hooks | _(shows warning in dialog)_ |
+| `hooks.fire:my-plugin:*` | Fire any hook in `my-plugin:` namespace | Wildcard matching |
 
 ### Registering hooks
 
@@ -46,15 +69,18 @@ module.exports = {
     const hooks = ctx.use('hooks');
 
     // Actions - fire-and-forget side effects
+    // (requires hooks.action:app:launch permission)
     hooks.addAction('app:launch', async (data) => {
       console.log('App launched!');
     });
 
+    // (requires hooks.action:app:file-open permission)
     hooks.addAction('app:file-open', async ({ path }) => {
       console.log('File opened:', path);
     });
 
     // Filters - transform a value through a chain
+    // (requires hooks.filter:my-plugin:transform permission)
     hooks.addFilter('my-plugin:transform', async (value, data) => {
       return value.toUpperCase();
     });
@@ -77,14 +103,36 @@ module.exports = {
 
 ### Custom hooks
 
-Plugins can define and fire their own hooks:
+Plugins can define and fire their own hooks (requires `hooks.fire` permission):
 
 ```js
-// In your plugin
+// In your plugin (requires hooks.fire:my-plugin:* or hooks.fire:my-plugin:custom-event)
 const hooks = ctx.use('hooks');
 await hooks.doAction('my-plugin:custom-event', { key: 'value' });
 const result = await hooks.applyFilters('my-plugin:filter', initialValue);
 ```
+
+### Overriding built-in behaviour
+
+Some built-in flows use **filters** that let plugins replace the default handling. For example, the file-open flow checks `app:file-open:handle` before showing its default UI:
+
+```js
+const hooks = ctx.use('hooks');
+
+hooks.addFilter('app:file-open:handle', async (result, data) => {
+  console.log('Custom handler for:', result.path);
+  // Return handled: true to skip the built-in permission dialog
+  return { ...result, handled: true };
+});
+```
+
+If no plugin sets `handled: true`, the default handler validates the manifest and shows the permission dialog (valid) or an error panel with "Open in Editor" (invalid).
+
+**Overridable filters:**
+
+| Filter | Controls | Skip with |
+|---|---|---|
+| `app:file-open:handle` | Default file-open UI | `{ handled: true }` |
 
 ---
 
